@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -8,18 +9,41 @@ from dotenv import load_dotenv
 def main():
     load_dotenv()
 
-    # Get command line arguments
-    args = sys.argv[1:]
+    # Create a parser to handle command line arguments
+    parser = argparse.ArgumentParser(description="AI Code Assistant")
 
-    # If no arguments are provided, display usage instructions
-    if not args:
+    parser.add_argument(
+        "prompt",
+        type=str,
+        nargs="+",
+        help="The prompt to send to the AI model. Enclose in quotes if it contains spaces.",
+    )
+
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gemini-2.0-flash-001",
+        help="The AI model to use (default: gemini-2.0-flash-001)",
+    )
+
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+    )
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    # If no prompt is provided, display usage instructions
+    if not args.prompt:
         print("AI Code Assistant")
         print("Usage: python main.py '<your prompt here>'")
         print("Example: python main.py 'Write a Python function to reverse a string'")
         sys.exit(1)
 
     # Load the user prompt from command line arguments
-    user_prompt = " ".join(args)  
+    user_prompt = " ".join(args.prompt)  
 
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)])
@@ -33,12 +57,14 @@ def main():
 
     # Generate content
     response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
+        model=args.model,
         contents=messages,
     )
-
-    print("Prompt tokens:", response.usage_metadata.prompt_token_count)
-    print("Response tokens:", response.usage_metadata.candidates_token_count)
+    if args.verbose:
+        print("User prompt:", user_prompt)
+        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
+        print("Response tokens:", response.usage_metadata.candidates_token_count)
+       
     print("Response:")
     print(response.text)
 

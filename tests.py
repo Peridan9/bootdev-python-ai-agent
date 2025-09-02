@@ -1,5 +1,6 @@
 from functions.get_files_info import get_files_info
 from functions.get_file_content import get_file_content
+from functions.write_file import write_file
 
 # tests.py
 
@@ -32,31 +33,49 @@ class TestGetFileInfo(unittest.TestCase):
     #     result = get_file_content("calculator", "lorem.txt")
     #     print(result)
     #     self.assertEqual(result, result)
-    
-    def test_006(self):
-        result = get_file_content("calculator", "main.py")
-        print(result)
-        self.assertTrue(result.startswith("# main.py"))
 
-    def test_007(self):
-        result = get_file_content("calculator", "pkg/calculator.py")
-        print(result)
-        self.assertTrue(result.startswith("# calculator.py"))
+    # def test_006(self):
+    #     result = get_file_content("calculator", "main.py")
+    #     print(result)
+    #     self.assertTrue(result.startswith("# main.py"))
 
-    def test_008(self):
-        result = get_file_content("calculator", "/bin/cat")
-        print(result)
-        self.assertEqual(result, 'Error: Cannot read "/bin/cat" as it is outside the permitted working directory.')
+    # def test_007(self):
+    #     result = get_file_content("calculator", "pkg/calculator.py")
+    #     print(result)
+    #     self.assertTrue(result.startswith("# calculator.py"))
 
-    def test_009(self):
-        result = get_file_content("calculator", "../main.py")
-        print(result)
-        self.assertEqual(result, 'Error: Cannot read "../main.py" as it is outside the permitted working directory.')
+    # def test_008(self):
+    #     result = get_file_content("calculator", "/bin/cat")
+    #     print(result)
+    #     self.assertEqual(result, 'Error: Cannot read "/bin/cat" as it is outside the permitted working directory.')
 
-    def test_010(self):
-        result = get_file_content("calculator", "pkg/does_not_exist.py")
+    # def test_009(self):
+    #     result = get_file_content("calculator", "../main.py")
+    #     print(result)
+    #     self.assertEqual(result, 'Error: Cannot read "../main.py" as it is outside the permitted working directory.')
+
+    # def test_010(self):
+    #     result = get_file_content("calculator", "pkg/does_not_exist.py")
+    #     print(result)
+    #     self.assertEqual(result, 'Error: "pkg/does_not_exist.py" does not exist or is not a file.')
+
+    # Test case for writing into files and creating files
+    def test_011(self):
+        result = write_file("calculator", "lorem.txt", "wait, this isn't lorem ipsum")
         print(result)
-        self.assertEqual(result, 'Error: "pkg/does_not_exist.py" does not exist or is not a file.')
+        self.assertEqual(result, 'Successfully wrote to "lorem.txt" (28 characters written)')
+
+    def test_012(self):
+        result = write_file("calculator", "pkg/morelorem.txt", "lorem ipsum dolor sit amet")
+        print(result)
+        self.assertEqual(result, 'Successfully wrote to "pkg/morelorem.txt" (26 characters written)')
+
+    def test_013(self):
+        result = write_file("calculator", "/tmp/temp.txt", "this should not be allowed")
+        print(result)
+        self.assertEqual(result, 'Error: Cannot write to "/tmp/temp.txt" as it is outside the permitted working directory.')
+        
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@ import argparse
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from functions.config import SYSTEM_PROMPT
 
 
 def main():
@@ -59,6 +60,7 @@ def main():
     response = client.models.generate_content(
         model=args.model,
         contents=messages,
+        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
     )
     if args.verbose:
         print("User prompt:", user_prompt)

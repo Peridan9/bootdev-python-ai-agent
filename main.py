@@ -5,6 +5,10 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from functions.config import SYSTEM_PROMPT
+from functions.get_files_info import schema_get_files_info
+from functions.get_file_content import schema_get_file_content
+from functions.write_file import schema_write_file
+from functions.run_python import schema_run_python_file
 
 
 def main():
@@ -56,12 +60,29 @@ def main():
     # Initialize the client
     client = genai.Client(api_key=api_key)
 
+    # list of Tools
+    available_functions = types.Tool(
+    function_declarations=[
+        schema_get_files_info,
+        schema_get_file_content,
+        schema_write_file,
+        schema_run_python_file,
+
+        ]
+    )
     # Generate content
     response = client.models.generate_content(
         model=args.model,
         contents=messages,
-        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
+        config=types.GenerateContentConfig(tools=[available_functions], system_instruction=SYSTEM_PROMPT)
     )
+
+    # print the function calls if any
+    if response.function_calls:
+        for call in response.function_calls:
+            print(f'Calling function: {call.name}({call.args})')
+        return
+
     if args.verbose:
         print("User prompt:", user_prompt)
         print("Prompt tokens:", response.usage_metadata.prompt_token_count)

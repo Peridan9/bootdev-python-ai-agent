@@ -1,1 +1,2 @@
 MAX_READ = 10000
+TIMEOUT = 30  # seconds

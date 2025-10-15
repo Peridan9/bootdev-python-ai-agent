@@ -97,7 +97,8 @@ def generate_content(client, messages, verbose):
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
-        config=types.GenerateContentConfig(tools=[available_functions], system_instruction=SYSTEM_PROMPT)
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=SYSTEM_PROMPT)
     )
 
     # Collect all candidate messages and append to messages
@@ -116,17 +117,20 @@ def generate_content(client, messages, verbose):
     
     # Process each function call in the response
     function_responses = []
-    for function_call in response.function_calls:
+    for function_call_part in response.function_calls:
         # Call the function and get the result
-        function_call_result = call_function(function_call, verbose)
+        function_call_result = call_function(function_call_part, verbose)
         if (
             not function_call_result.parts
-            or not function_call_result.parts[0].function_response.response
+            or not function_call_result.parts[0].function_response
         ):
             raise Exception("empty function call result")
         if verbose:
             print(f"-> {function_call_result.parts[0].function_response.response}")
         function_responses.append(function_call_result.parts[0])
+    
+    if not function_responses:
+        raise Exception("no function responses generated, exiting.")
     
     messages.append(
         types.Content(
@@ -135,9 +139,6 @@ def generate_content(client, messages, verbose):
         )
     )
     
-    # Ensure at least one function response was generated
-    if not function_responses:
-        raise Exception("no function responses generated, exiting.")
 
 
 if __name__ == "__main__":

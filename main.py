@@ -9,7 +9,17 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.write_file import schema_write_file
 from functions.run_python import schema_run_python_file
+from functions.call_function import call_function, available_functions
 
+# def call_function(function_call_part, verbose=False):
+#     """
+#     Calls the appropriate function based on the function call part provided by the AI model.
+    
+#     Args:
+#         function_call_part (types.FunctionCall): The function call part from the AI model response.
+#         verbose (bool): If True, prints detailed information about the function call.
+
+#     """
 
 def main():
     load_dotenv()
@@ -60,16 +70,6 @@ def main():
     # Initialize the client
     client = genai.Client(api_key=api_key)
 
-    # list of Tools
-    available_functions = types.Tool(
-    function_declarations=[
-        schema_get_files_info,
-        schema_get_file_content,
-        schema_write_file,
-        schema_run_python_file,
-
-        ]
-    )
     # Generate content
     response = client.models.generate_content(
         model=args.model,
@@ -79,8 +79,14 @@ def main():
 
     # print the function calls if any
     if response.function_calls:
-        for call in response.function_calls:
-            print(f'Calling function: {call.name}({call.args})')
+        for function_call in response.function_calls:
+            function_call_result = call_function(function_call, verbose=args.verbose)
+            if function_call_result.parts[0].function_response.response:
+                if args.verbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+            else:
+                raise Exception("No response from function call")
+         
         return
 
     if args.verbose:

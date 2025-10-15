@@ -4,7 +4,7 @@ import argparse
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from functions.config import SYSTEM_PROMPT
+from functions.config import SYSTEM_PROMPT, MAX_ITERATIONS
 from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.write_file import schema_write_file
@@ -73,17 +73,37 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)])
     ]
+    iteration = 0
 
-    generate_content(client, messages, verbose)
+    while True:
+        iteration += 1
+        if iteration > MAX_ITERATIONS:
+            print(f'Exceeded maximum iterations ({MAX_ITERATIONS}). Exiting.')
+            sys.exit(1)
+        try:
+            final_response = generate_content(client, messages, verbose)
+            if final_response:
+                print("Final Response")
+                print(final_response)
+                break
+        except Exception as e:
+            print(f"Error in generate_content: {e}")
     
 
 def generate_content(client, messages, verbose):
+
+    
      # Generate content
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
         config=types.GenerateContentConfig(tools=[available_functions], system_instruction=SYSTEM_PROMPT)
     )
+
+    # Collect all candidate messages and append to messages
+    if response.candidates:
+        for candidate in response.candidates:
+            messages.append(candidate.content)
 
     # if verbose, print token usage
     if verbose:
@@ -100,13 +120,20 @@ def generate_content(client, messages, verbose):
         # Call the function and get the result
         function_call_result = call_function(function_call, verbose)
         if (
-            not function_call.parts
+            not function_call_result.parts
             or not function_call_result.parts[0].function_response.response
         ):
             raise Exception("empty function call result")
         if verbose:
             print(f"-> {function_call_result.parts[0].function_response.response}")
         function_responses.append(function_call_result.parts[0])
+    
+    messages.append(
+        types.Content(
+            role="user",
+            parts=function_responses
+        )
+    )
     
     # Ensure at least one function response was generated
     if not function_responses:
